@@ -97,7 +97,7 @@ public class Camera2Activity extends AppCompatActivity implements SurfaceHolder.
 
                         // 这两项需要放在setOutputFormat之后
                         mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-                        mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
+                        mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP); //MediaRecorder.VideoEncoder.H264
 
                         mRecorder.setVideoSize(640, 480);
                         mRecorder.setVideoFrameRate(30);

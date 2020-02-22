@@ -8,11 +8,11 @@ import android.view.SurfaceView;
 
 import java.io.IOException;
 
-public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
+public class CameraView1 extends SurfaceView implements SurfaceHolder.Callback {
     private SurfaceHolder surfaceHolder;
     private Camera mCamera;
 
-    public CameraView(Context context, AttributeSet attrs) {
+    public CameraView1(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 

@@ -26,4 +26,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void goCamera3(View v)
+    {
+        Intent intent = new Intent(this,Camera3Activity.class);
+        startActivity(intent);
+    }
+
 }

@@ -18,4 +18,11 @@
         android:onClick="goCamera2"
         android:text="摄像头2" />
 
+    <Button
+        android:id="@+id/button_camera3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="goCamera3"
+        android:text="摄像头3" />
+
 </LinearLayout>

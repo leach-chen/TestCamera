@@ -7,9 +7,12 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
+import android.hardware.Camera;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -18,6 +21,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.vtc365.api.BaseApi;
 import com.vtc365.api.ChatApi;
@@ -27,17 +31,21 @@ import com.vtc365.api.TalkApi;
 import com.vtc365.api.VtcPlayer;
 import com.vtc365.api.XmppTalk;
 import com.vtc365.bean.MobileConfigBeanClient;
+import com.vtc365.utils.StreamManager;
 import com.vtc365.view.VideoStreamsView;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Camera3Activity extends AppCompatActivity {
+import static com.example.testcamera.Camera2Activity.getDate;
+
+public class Camera3Activity extends AppCompatActivity implements SurfaceHolder.Callback{
 
 
     public static String MY_APPID = "";
@@ -93,6 +101,11 @@ public class Camera3Activity extends AppCompatActivity {
 
         activity = this;
         ll_content = (LinearLayout)this.findViewById(R.id.ll_content);
+
+        SurfaceHolder holder = ((SurfaceView)this.findViewById(R.id.surfaceview)).getHolder();
+        holder.addCallback(this);
+        // setType必须设置，要不出错.
+        holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
         init();
     }
@@ -308,9 +321,10 @@ public class Camera3Activity extends AppCompatActivity {
 
     }
 
+    SurfaceHolder holder;
     private SurfaceView initLocal() {
         SurfaceView video = new SurfaceView(activity);
-        SurfaceHolder holder = video.getHolder();
+        holder = video.getHolder();
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
@@ -334,6 +348,21 @@ public class Camera3Activity extends AppCompatActivity {
         return video;
     }
 
+    class LocalStartRun implements Runnable {
+
+        SurfaceHolder holder = null;
+
+        public void setHolder(SurfaceHolder holder) {
+            this.holder = holder;
+        }
+
+        @Override
+        public void run() {
+            liveBroadcast = new LiveBroadcast(activity, livingHandler, LiveBroadcast.LIVING, LiveBroadcast.USB, this.holder, null);
+            liveBroadcast.start();
+        }
+    }
+
     public void openLocalVideo(View v){
         new Thread(new Runnable() {
             @Override
@@ -351,18 +380,119 @@ public class Camera3Activity extends AppCompatActivity {
 
     }
 
-    class LocalStartRun implements Runnable {
+    public void startVideo(View v)
+    {
+        liveBroadcast.start();
+        Log.e("mytest","aaaaaaaaa:"+liveBroadcast.getMp4());
+    }
 
-        SurfaceHolder holder = null;
+    public void stopVideo(View v)
+    {
+        liveBroadcast.stop();
+        Log.e("mytest","bbbbbbbb:"+liveBroadcast.getMp4());
+    }
 
-        public void setHolder(SurfaceHolder holder) {
-            this.holder = holder;
+    public String getSDPath() {
+        File sdDir = null;
+        boolean sdCardExist = Environment.getExternalStorageState()
+                .equals(android.os.Environment.MEDIA_MOUNTED); // 判断sd卡是否存在
+        if (sdCardExist) {
+            sdDir = Environment.getExternalStorageDirectory();// 获取跟目录
+            return sdDir.toString();
+        }
+        return null;
+    }
+
+    private MediaRecorder mRecorder;
+    private boolean mStartedFlg = false;//是否正在录像
+    private  Camera mCamera;
+    public void testButton(View v)
+    {
+            Log.e("mytest", StreamManager.getInstance().getCp() + "");
+            if (!mStartedFlg) {
+                if (mRecorder == null) {
+                    mRecorder = new MediaRecorder();
+                }
+
+                mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);
+                if (mCamera != null) {
+                    mCamera.setDisplayOrientation(90);
+                    mCamera.unlock();
+                    mRecorder.setCamera(mCamera);
+                }
+
+                try {
+                    Toast.makeText(activity, "开始录制", Toast.LENGTH_SHORT).show();
+                    // 这两项需要放在setOutputFormat之前
+                    mRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+                    mRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+
+                    // Set output file format
+                    mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+
+                    // 这两项需要放在setOutputFormat之后
+                    mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                    mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP); //MediaRecorder.VideoEncoder.H264
+
+                    mRecorder.setVideoSize(640, 480);
+                    mRecorder.setVideoFrameRate(30);
+                    mRecorder.setVideoEncodingBitRate(3 * 1024 * 1024);
+                    mRecorder.setOrientationHint(90);
+                    //设置记录会话的最大持续时间（毫秒）
+                    mRecorder.setMaxDuration(30 * 1000);
+                    //mRecorder.setPreviewDisplay(holder.getSurface());
+                    mRecorder.setPreviewDisplay(mSurfaceHolder.getSurface());
+
+                    String path = getSDPath();
+                    if (path != null) {
+                        File dir = new File(path + "/recordtest");
+                        if (!dir.exists()) {
+                            dir.mkdir();
+                        }
+                        path = dir + "/" + getDate() + ".mp4";
+                        mRecorder.setOutputFile(path);
+                        mRecorder.prepare();
+                        mRecorder.start();
+                        mStartedFlg = true;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                //stop
+                if (mStartedFlg) {
+                    try {
+                        Toast.makeText(activity, "停止录制", Toast.LENGTH_SHORT).show();
+                        mRecorder.stop();
+                        mRecorder.reset();
+                        mRecorder.release();
+                        mRecorder = null;
+                        if (mCamera != null) {
+                            mCamera.release();
+                            mCamera = null;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                mStartedFlg = false;
+            }
         }
 
-        @Override
-        public void run() {
-            liveBroadcast = new LiveBroadcast(activity, livingHandler, LiveBroadcast.LOCAL, LiveBroadcast.USB, this.holder, null);
-            liveBroadcast.start();
-        }
+    private SurfaceHolder mSurfaceHolder;
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        mSurfaceHolder = holder;
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+
     }
 }

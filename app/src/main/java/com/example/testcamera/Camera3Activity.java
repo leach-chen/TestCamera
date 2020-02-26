@@ -40,7 +40,7 @@ import java.util.Map;
 public class Camera3Activity extends AppCompatActivity {
 
 
-    public static String MY_APPID = "13961";
+    public static String MY_APPID = "";
     public static String serviceIP = "www.vtc365.com";
     public Activity activity;
     public BaseApi baseApi;

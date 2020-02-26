@@ -31,6 +31,13 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:onClick="pauseVideo"
+            android:text="暂停"
+            ></Button>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:onClick="stopVideo"
             android:text="停止"
             ></Button>

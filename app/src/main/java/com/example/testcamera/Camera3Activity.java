@@ -358,7 +358,7 @@ public class Camera3Activity extends AppCompatActivity implements SurfaceHolder.
 
         @Override
         public void run() {
-            liveBroadcast = new LiveBroadcast(activity, livingHandler, LiveBroadcast.LIVING, LiveBroadcast.USB, this.holder, null);
+            liveBroadcast = new LiveBroadcast(activity, livingHandler, LiveBroadcast.LOCAL, LiveBroadcast.USB, this.holder, null);
             liveBroadcast.start();
         }
     }
@@ -383,13 +383,16 @@ public class Camera3Activity extends AppCompatActivity implements SurfaceHolder.
     public void startVideo(View v)
     {
         liveBroadcast.start();
-        Log.e("mytest","aaaaaaaaa:"+liveBroadcast.getMp4());
+    }
+
+    public void pauseVideo(View v)
+    {
+        liveBroadcast.pause();
     }
 
     public void stopVideo(View v)
     {
         liveBroadcast.stop();
-        Log.e("mytest","bbbbbbbb:"+liveBroadcast.getMp4());
     }
 
     public String getSDPath() {
@@ -414,7 +417,11 @@ public class Camera3Activity extends AppCompatActivity implements SurfaceHolder.
                     mRecorder = new MediaRecorder();
                 }
 
-                mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);
+                if(mCamera == null)
+                {
+                    mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);
+                }
+
                 if (mCamera != null) {
                     mCamera.setDisplayOrientation(90);
                     mCamera.unlock();
@@ -440,8 +447,8 @@ public class Camera3Activity extends AppCompatActivity implements SurfaceHolder.
                     mRecorder.setOrientationHint(90);
                     //设置记录会话的最大持续时间（毫秒）
                     mRecorder.setMaxDuration(30 * 1000);
-                    //mRecorder.setPreviewDisplay(holder.getSurface());
                     mRecorder.setPreviewDisplay(mSurfaceHolder.getSurface());
+                    //mRecorder.setPreviewDisplay(holder.getSurface());
 
                     String path = getSDPath();
                     if (path != null) {
@@ -456,6 +463,7 @@ public class Camera3Activity extends AppCompatActivity implements SurfaceHolder.
                         mStartedFlg = true;
                     }
                 } catch (Exception e) {
+                    Toast.makeText(activity, "录制失败", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
             } else {
